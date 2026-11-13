@@ -26,6 +26,20 @@ public struct GposeCameraStruct
 /// <summary>读写 GPose 相机。所有方法必须在游戏主线程调用。</summary>
 public static unsafe class GposeCamera
 {
+    public sealed record SavedSettings(float Distance, float Min, float Max, float Fov, float Zoom, Vector2 Angle, Vector2 Pan, float Roll);
+    public static SavedSettings? SaveSettings()
+    {
+        var c = Active;
+        return c == null ? null : new(c->Distance, c->MinDistance, c->MaxDistance, c->FoV, c->Zoom, c->Angle, c->Pan, c->Roll);
+    }
+    public static void RestoreSettings(SavedSettings saved)
+    {
+        var c = Active;
+        if (c == null) return;
+        c->MinDistance = saved.Min; c->MaxDistance = saved.Max; c->FoV = saved.Fov;
+        c->Angle = saved.Angle; c->Pan = saved.Pan; c->Roll = saved.Roll;
+        SnapDistance(saved.Distance); SnapZoom(saved.Zoom);
+    }
     private static GposeCameraStruct* Active => (GposeCameraStruct*)CameraManager.Instance()->GetActiveCamera();
 
     public static object? Read()

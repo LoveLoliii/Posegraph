@@ -38,6 +38,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly CompositionWindow _composition;
     private readonly Editor.PoseEditor _poseEditor;
     private readonly VideoWindow _video;
+    private readonly LiveWindow _live;
     private bool _openedByGpose;
     private bool _shotRequested;
     private readonly IDataManager _data;
@@ -117,6 +118,10 @@ public sealed class Plugin : IDalamudPlugin
         _video = new VideoWindow(_config, pi, framework, textures, readback, gameGui, _main, brio, applier);
         _windows.AddWindow(_video);
         _main.ToggleVideo = _video.Toggle;
+        _live = new LiveWindow(_main, framework, applier, brio, textures, _config, pi);
+        _live.VideoPlaying = () => _video.IsPlaying;
+        _windows.AddWindow(_live);
+        _main.ToggleLive = _live.Toggle;
         var idle = new Idle.IdleService(pi, data, framework, sigScanner, log);
         _idleWindow = new IdleWindow(idle, () => _main.CurrentRace, _main.PosesForRacesAsync, () => _main.BackendOnline);
         _windows.AddWindow(_idleWindow);
@@ -315,6 +320,7 @@ public sealed class Plugin : IDalamudPlugin
         _windows.RemoveAllWindows();
         _library.Dispose();
         _video.Dispose();
+        _live.Dispose();
         _split.Dispose();
         _masks.Dispose();
         _update.Dispose();

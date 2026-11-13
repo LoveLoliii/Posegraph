@@ -11,6 +11,8 @@
 	<!-- 国服 XIVLauncherCN 的 Dalamud；不存在时 SDK 会回落到国际服默认路径 -->
 	<PropertyGroup Condition="Exists('$(AppData)\XIVLauncherCN\addon\Hooks\dev\Dalamud.dll')">
 		<DalamudLibPath>$(AppData)\XIVLauncherCN\addon\Hooks\dev\</DalamudLibPath>
+		<!-- SDK props already captured the international path; prefer the CN assemblies too. -->
+		<AssemblySearchPaths>$(DalamudLibPath);$(AssemblySearchPaths)</AssemblySearchPaths>
 	</PropertyGroup>
 
 	<ItemGroup>

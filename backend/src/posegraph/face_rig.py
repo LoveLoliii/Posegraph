@@ -255,7 +255,7 @@ def summary(m: dict, bs: dict | None = None) -> dict[str, float]:
 
 
 def solve(sk: FaceSkeleton, measures: dict[str, float], strength: float = 1.0,
-          blendshapes: dict[str, float] | None = None, gains: dict[str, float] | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+          blendshapes: dict[str, float] | None = None, gains: dict[str, float] | None = None, mouth_limit: float = 1.0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """面部骨架的局部姿势（位移、四元数 xyzw、缩放）。measures 见 face_geom.measure；没有几何测量时（旧会话）只转视线。
     gains：分组权重（FACE_GROUPS → 倍数，缺省 1），和总强度相乘；结果照样夹在游戏实测范围里。"""
     gain = lambda group: strength * float((gains or {}).get(group, 1.0))
@@ -299,7 +299,7 @@ def solve(sk: FaceSkeleton, measures: dict[str, float], strength: float = 1.0,
         drop = max(measures.get("jaw_open", 0.0), JAW_PER_LIP_GAP * measures.get("lips_apart", 0.0))
         want = drop * cm_to_m
         if game_drop > 1e-5:
-            add(jaw, float(np.clip(want / game_drop * gain("jaw"), 0, 1)))
+            add(jaw, float(np.clip(want / game_drop * gain("jaw"), 0, mouth_limit)))
 
     # 跟随关键点的骨骼：照片上对应关键点的位移 → 游戏脸的位移（下巴下的骨骼扣掉下巴已经带过去的部分）
     if measures.get("_aligned") is not None:
@@ -326,6 +326,14 @@ def solve(sk: FaceSkeleton, measures: dict[str, float], strength: float = 1.0,
     # 夹到游戏实测的范围
     rv = np.clip(rv, sk.rot_lo, sk.rot_hi)
     dt = np.clip(dt, sk.tr_lo, sk.tr_hi)
+    # Live-only optional envelope: include lips as well as jaw so lips cannot
+    # compensate for a capped jaw by stretching beyond the requested range.
+    if mouth_limit < 1.0:
+        for i, name in enumerate(sk.bones):
+            part = re.sub(r"^j_f_|_[lr]$", "", name)
+            if (part in FOLLOW and part not in _BROW_FOLLOW) or re.match(r"^j_(f_)?ago$", name):
+                rv[i] = np.clip(rv[i], sk.rot_lo[i] * mouth_limit, sk.rot_hi[i] * mouth_limit)
+                dt[i] = np.clip(dt[i], sk.tr_lo[i] * mouth_limit, sk.tr_hi[i] * mouth_limit)
     t = sk.ref_t + dt
     q = np.stack([(R.from_quat(sk.ref_q[i]) * R.from_rotvec(rv[i])).as_quat() for i in range(n)])
     _gaze(sk, t, q, measures, blendshapes or {}, gain("gaze"))
@@ -422,12 +430,12 @@ def measure(landmarks, rotation=None) -> dict:
 
 
 def face_bones(race: str, reference, head, landmarks, strength: float = 1.0, blendshapes: dict | None = None,
-               rotation=None, gains: dict | None = None) -> tuple[dict, str | None, dict]:
+               rotation=None, gains: dict | None = None, mouth_limit: float = 1.0) -> tuple[dict, str | None, dict]:
     """一步到位：认骨架 → 测量 → 换算 → 模型空间。返回 (骨骼, 用的骨架名, 控制量)；没有导出数据时 ({}, None, {})。
     rotation：脸的朝向（face.FaceResult.rotation），有它时测量不依赖关键点深度、视线以看得见的那只眼为准。"""
     sk = match(race, reference)
     if sk is None:
         return {}, None, {}
     m = measure(landmarks, rotation)
-    t, q, s = solve(sk, m, strength, blendshapes, gains)
+    t, q, s = solve(sk, m, strength, blendshapes, gains, mouth_limit)
     return to_model(sk, t, q, s, head), sk.name, summary(m, blendshapes) if m else {}

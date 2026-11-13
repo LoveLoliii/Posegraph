@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+live = ["cv2-enumerate-cameras==1.4.0"]
 # SAM 3D Body 推理所需（torch/torchvision 需另外按 CUDA / ROCm 版本安装，见 scripts/setup_sam3d.ps1）
 sam3d = [
     "pytorch-lightning",

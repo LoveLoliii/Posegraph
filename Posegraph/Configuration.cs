@@ -130,6 +130,9 @@ public class Configuration : IPluginConfiguration
     public float VideoSmooth { get; set; } = 0.5f;
     public bool VideoFace { get; set; } = true;
     public float VideoFaceStrength { get; set; } = 1f;                       // 视频表情强度（后端再打七折）
+    public float? LiveFaceStrength { get; set; }
+    public Dictionary<string, float>? LiveFaceGains { get; set; }
+    public float LiveMouthLimit { get; set; } = 1f;
     public Dictionary<string, float> VideoFaceGains { get; set; } = new();   // 分项权重：eyes / brows / mouth / jaw / gaze
     public int VideoRecordFps { get; set; } = 30;   // 录成视频的帧率，0 = 跟片段一样
 

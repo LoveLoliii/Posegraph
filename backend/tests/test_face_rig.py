@@ -247,3 +247,19 @@ class FaceRigTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+def test_live_mouth_limit_preserves_blink(tmp_path):
+    write_dump(tmp_path, 'test', 1.0)
+    sk = face_rig._load(str(tmp_path / 'test.json.gz'))
+    m = neutral_measures(jaw_open=100., lips_apart=100., eye_open_l=0.)
+    _, full, _ = face_rig.solve(sk, m)
+    _, capped, _ = face_rig.solve(sk, m, mouth_limit=0.35)
+    _, closed, _ = face_rig.solve(sk, m, mouth_limit=0.)
+    jaw = sk.index['j_f_ago']
+    angle = lambda q: (R.from_quat(sk.ref_q[jaw]).inv() * R.from_quat(q[jaw])).magnitude()
+    assert angle(full) > 0.1
+    assert angle(capped) <= angle(full) * 0.35 + 1e-7
+    assert angle(closed) < 1e-7
+    eye = sk.index['j_f_mabup_01_l']
+    np.testing.assert_allclose(capped[eye], full[eye])
+    np.testing.assert_allclose(closed[eye], full[eye])

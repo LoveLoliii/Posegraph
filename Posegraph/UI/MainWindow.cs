@@ -78,6 +78,7 @@ public sealed partial class MainWindow : Window, IDisposable
 
     /// <summary>打开 / 关闭视频窗口（由 Plugin 接上）。</summary>
     public Action? ToggleVideo { get; set; }
+    public Action? ToggleLive { get; set; }
 
     /// <summary>导出到 Blender（由 Plugin 接上，只有 Debug 版有；没接上时不显示按钮）：返回导出的文件夹，失败时抛异常（消息给用户看）。</summary>
     public Func<Task<string>>? ExportBlender { get; set; }
@@ -1395,6 +1396,9 @@ public sealed partial class MainWindow : Window, IDisposable
         ImGui.SameLine();
         if (IconButton("##video", FontAwesomeIcon.Film, Loc.T("视频：逐帧识别视频里的动作和镜头，在游戏里播放"), ToggleVideo is not null))
             ToggleVideo!();
+        ImGui.SameLine();
+        if (IconButton("##live", FontAwesomeIcon.BroadcastTower, Loc.T("Live：摄像头实时动作与表情捕捉"), ToggleLive is not null))
+            ToggleLive!();
         if (ExportBlender is not null)
         {
             ImGui.SameLine();

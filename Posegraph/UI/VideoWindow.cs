@@ -22,6 +22,7 @@ namespace Posegraph.UI;
 /// </summary>
 public sealed partial class VideoWindow : Window, IDisposable
 {
+    public bool IsPlaying => _player.Playing;
     private static readonly Vector4 Green = PosegraphTheme.Green;
     private static readonly Vector4 Yellow = PosegraphTheme.Yellow;
     private static readonly Vector4 Grey = PosegraphTheme.Grey;

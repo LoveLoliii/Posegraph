@@ -56,6 +56,8 @@ from .parallel_batch import ParallelBatch
 from .shared_inference import ModelLifecycle
 
 app = FastAPI(title="posegraph", version=__version__)
+from .live import router as live_router
+app.include_router(live_router)
 
 
 @app.exception_handler(Exception)
